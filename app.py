@@ -1,81 +1,80 @@
 import streamlit as st
 import requests
+from passlib.context import CryptContext
 
-API_URL = "https://asesorias-api.azurewebsites.net"  # Asegúrate de usar la URL correcta de tu API de FastAPI
+# Configurar el contexto de passlib para manejo de contraseñas
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+API_URL = "https://asesorias-api.azurewebsites.net"
 
-def create_asesoria(data):
-    response = requests.post(f"{API_URL}/asesorias/", json=data)
-    if response.status_code != 200:
-        st.error(f"Error al crear asesoría: {response.text}")
-    else:
-        st.success("Asesoría creada exitosamente.")
-        return response.json()
-
-def list_asesorias():
-    response = requests.get(f"{API_URL}/asesorias/")
+def obtener_usuario_por_username(username):
+    """Obtiene un usuario por nombre de usuario de la API."""
+    response = requests.get(f"{API_URL}/usuarios/username/{username}")
     if response.status_code == 200:
         return response.json()
     else:
-        st.error("Error al obtener la lista de asesorías.")
-        return []
+        st.error("No se pudo obtener el usuario")
+        return None
 
-def update_asesoria(id, data):
-    response = requests.put(f"{API_URL}/asesorias/{id}", json=data)
-    if response.status_code == 200:
-        st.success("Asesoría actualizada exitosamente.")
-        return response.json()
-    else:
-        st.error(f"Error al actualizar la asesoría: {response.text}")
+def verificar_usuario(username, password):
+    """Verifica las credenciales del usuario contra la información obtenida de la API."""
+    user = obtener_usuario_por_username(username)
+    if user and pwd_context.verify(password, user['password']):
+        return True
+    return False
 
-def delete_asesoria(id):
-    response = requests.delete(f"{API_URL}/asesorias/{id}")
+def registrar_usuario(data):
+    """Envía los datos del usuario a la API para registrar un nuevo usuario."""
+    response = requests.post(f"{API_URL}/usuarios/", json=data)
     if response.status_code == 200:
-        st.success("Asesoría eliminada exitosamente.")
+        st.success("Usuario registrado exitosamente.")
     else:
-        st.error(f"Error al eliminar la asesoría: {response.text}")
+        st.error(f"Error al registrar usuario: {response.text}")
+
+def pagina_registro():
+    """Página de registro de usuario."""
+    with st.form("form_registro"):
+        st.write("Registro de nuevo usuario")
+        nombre = st.text_input("Nombre")
+        apellido = st.text_input("Apellido")
+        email = st.text_input("Email")
+        username = st.text_input("Nombre de usuario")
+        password = st.text_input("Contraseña", type="password")
+        confirm_password = st.text_input("Confirmar contraseña", type="password")
+
+        submit = st.form_submit_button("Registrar")
+        if submit:
+            if password == confirm_password:
+                data = {
+                    "nombre": nombre,
+                    "apellido": apellido,
+                    "email": email,
+                    "username": username,
+                    "password": password  # El hashing debe hacerse en el servidor
+                }
+                registrar_usuario(data)
+            else:
+                st.error("Las contraseñas no coinciden.")
 
 def main():
-    st.title("Gestión de Asesorías")
+    st.sidebar.title("Navegación")
+    choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
 
-    with st.form("create_asesoria"):
-        st.subheader("Crear nueva asesoría")
-        usuario_id = st.text_input("ID del Usuario", help="Ingrese el ID del usuario asociado a la asesoría.")
-        titulo = st.text_input("Título", help="Ingrese el título de la asesoría.")
-        descripcion = st.text_area("Descripción", help="Ingrese una descripción para la asesoría.")
-        fecha = st.date_input("Fecha", help="Seleccione la fecha de la asesoría.")
-        hora = st.time_input("Hora", help="Seleccione la hora de la asesoría.")
-        profesor = st.text_input("Profesor", help="Ingrese el nombre del profesor para la asesoría.")
-        submit = st.form_submit_button("Crear Asesoría")
-        if submit:
-            asesoria_data = {
-                "usuario_id": usuario_id,
-                "titulo": titulo,
-                "descripcion": descripcion,
-                "fecha": str(fecha),
-                "hora": str(hora),
-                "profesor": profesor
-            }
-            create_asesoria(asesoria_data)
+    if choice == "Iniciar sesión":
+        username = st.sidebar.text_input("Nombre de usuario")
+        password = st.sidebar.text_input("Contraseña", type="password")
+        if st.sidebar.button("Login"):
+            if verificar_usuario(username, password):
+                st.session_state['usuario'] = username  # Mantener estado de sesión
+                st.success("Inicio de sesión exitoso")
+            else:
+                st.error("Nombre de usuario o contraseña incorrectos")
+        if 'usuario' in st.session_state:
+            st.write(f"Bienvenido, {st.session_state['usuario']}!")
+        else:
+            st.info("Por favor, inicia sesión para continuar.")
 
-    st.subheader("Lista de Asesorías")
-    asesorias = list_asesorias()
-    for asesoria in asesorias:
-        st.write(f"{asesoria['id']} - {asesoria['titulo']} - {asesoria['descripcion']}")
-
-    with st.form("update_asesoria"):
-        st.subheader("Actualizar Asesoría")
-        asesoria_id = st.text_input("ID de Asesoría a Actualizar", key="update_id")
-        new_titulo = st.text_input("Nuevo Título", key="new_title")
-        update_button = st.form_submit_button("Actualizar Asesoría")
-        if update_button:
-            update_asesoria(asesoria_id, {"titulo": new_titulo})
-
-    with st.form("delete_asesoria"):
-        st.subheader("Eliminar Asesoría")
-        delete_id = st.text_input("ID de Asesoría a Eliminar", key="delete_id")
-        delete_button = st.form_submit_button("Eliminar Asesoría")
-        if delete_button:
-            delete_asesoria(delete_id)
+    elif choice == "Registro":
+        pagina_registro()
 
 if __name__ == "__main__":
     main()
