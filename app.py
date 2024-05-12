@@ -78,7 +78,10 @@ def pagina_asesorias():
 
 def main():
     st.sidebar.title("Navegación")
-    choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
+    if 'usuario' in st.session_state:
+        choice = st.sidebar.radio("Menu", ["Inicio", "Ver Asesorías", "Agregar Asesoría", "Cerrar Sesión"])
+    else:
+        choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
 
     if choice == "Iniciar sesión":
         username = st.sidebar.text_input("Nombre de usuario")
@@ -91,16 +94,13 @@ def main():
                 st.error("Nombre de usuario o contraseña incorrectos")
         if 'usuario' in st.session_state:
             st.write(f"Bienvenido, {st.session_state['usuario']}!")
+            pagina_asesorias()
         else:
             st.info("Por favor, inicia sesión para continuar.")
-
     elif choice == "Registro":
         pagina_registro()
     elif choice == "Ver Asesorías":
-        if 'usuario_id' in st.session_state:
-            pagina_asesorias()
-        else:
-            st.warning("Por favor, inicia sesión para ver tus asesorías.")
+        pagina_asesorias()
 
 if __name__ == "__main__":
     main()
