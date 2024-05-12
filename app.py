@@ -16,19 +16,28 @@ def login(username, password):
         return None
 
 
-
-def create_user(name, email, username, password):
+def create_user(nombre, apellido, email, username, password):
     """Función para registrar un nuevo usuario."""
-    response = requests.post(f"{API_URL}/usuarios/", json={
-        "name": name,
+    response = requests.post(f"{API_URL}/usuarios", json={
+        "nombre": nombre,
+        "apellido": apellido,
         "email": email,
         "username": username,
         "password": password
     })
     if response.status_code == 200:
         st.success("Usuario creado exitosamente.")
+    elif response.status_code == 204:
+        st.info("No se devolvió contenido.")
     else:
-        st.error(response.json().get("detail", "Error al crear el usuario."))
+        try:
+            # Intentamos obtener el mensaje de error detallado, si está disponible
+            error_detail = response.json().get("detail", "Error desconocido al crear el usuario.")
+        except ValueError:
+            # No se pudo decodificar JSON, manejamos el caso genérico
+            error_detail = "Error sin respuesta detallada del servidor."
+        st.error(f"Error al crear el usuario: {error_detail}")
+
 
 def get_asesorias(token):
     """Función para obtener las asesorías del usuario autenticado."""
