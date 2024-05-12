@@ -55,33 +55,60 @@ def pagina_registro():
             else:
                 st.error("Las contraseñas no coinciden.")
 
-def listar_asesorias(usuario_id):
-    """Lista las asesorías del usuario."""
-    response = requests.get(f"{API_URL}/asesorias", params={"usuario_id": usuario_id})
+def listar_asesorias(username):
+    """Obtiene asesorías del usuario por nombre de usuario de la API."""
+    response = requests.get(f"{API_URL}/asesorias/username/{username}")
     if response.status_code == 200:
         return response.json()
     else:
         st.error("Error al obtener asesorías.")
         return []
 
-def pagina_asesorias():
+
+def pagina_asesorias(username):
     """Página que muestra las asesorías del usuario."""
     st.write("Tus Asesorías")
-    if 'usuario_id' in st.session_state:
-        asesorias = listar_asesorias(st.session_state['usuario_id'])
+    asesorias = listar_asesorias(username)
+    if asesorias:
         for asesoria in asesorias:
-            st.subheader(asesoria['titulo'])
-            st.write("Descripción:", asesoria['descripcion'])
-            st.write("Fecha:", asesoria['fecha'])
-            st.write("Hora:", asesoria['hora'])
-            st.write("Profesor:", asesoria['profesor'])
+            st.write(f"Titulo: {asesoria['titulo']}, Fecha: {asesoria['fecha']}, Hora: {asesoria['hora']}")
+    else:
+        st.write("No tienes asesorías registradas.")
+
+def agregar_asesoria(data):
+    """Envía los datos de la nueva asesoría a la API."""
+    response = requests.post(f"{API_URL}/asesorias", json=data)
+    if response.status_code == 200:
+        st.success("Asesoría agregada exitosamente.")
+    else:
+        st.error(f"Error al agregar asesoría: {response.text}")
+
+def pagina_agregar_asesoria():
+    """Página para agregar una nueva asesoría."""
+    with st.form("form_asesoria"):
+        st.write("Agregar nueva asesoría")
+        titulo = st.text_input("Título")
+        descripcion = st.text_area("Descripción")
+        fecha = st.date_input("Fecha")
+        hora = st.time_input("Hora")
+        profesor = st.text_input("Profesor")
+
+        submit = st.form_submit_button("Agregar Asesoría")
+        if submit:
+            data = {
+                "titulo": titulo,
+                "descripcion": descripcion,
+                "fecha": fecha.isoformat(),
+                "hora": hora.strftime("%H:%M"),
+                "profesor": profesor,
+                "usuario_id": st.session_state['usuario_id']
+            }
+            agregar_asesoria(data)
+
 
 def main():
     st.sidebar.title("Navegación")
-    if 'usuario' in st.session_state:
-        choice = st.sidebar.radio("Menu", ["Inicio", "Ver Asesorías", "Agregar Asesoría", "Cerrar Sesión"])
-    else:
-        choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
+    choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
 
     if choice == "Iniciar sesión":
         username = st.sidebar.text_input("Nombre de usuario")
@@ -90,17 +117,16 @@ def main():
             if verificar_usuario(username, password):
                 st.session_state['usuario'] = username  # Mantener estado de sesión
                 st.success("Inicio de sesión exitoso")
+                pagina_asesorias(username)  # Mostrar asesorías directamente después de iniciar sesión
             else:
                 st.error("Nombre de usuario o contraseña incorrectos")
         if 'usuario' in st.session_state:
             st.write(f"Bienvenido, {st.session_state['usuario']}!")
-            pagina_asesorias()
         else:
             st.info("Por favor, inicia sesión para continuar.")
+
     elif choice == "Registro":
         pagina_registro()
-    elif choice == "Ver Asesorías":
-        pagina_asesorias()
 
 if __name__ == "__main__":
     main()
