@@ -55,6 +55,28 @@ def pagina_registro():
             else:
                 st.error("Las contraseñas no coinciden.")
 
+def listar_asesorias(usuario_id):
+    """Lista las asesorías del usuario."""
+    response = requests.get(f"{API_URL}/asesorias", params={"usuario_id": usuario_id})
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Error al obtener asesorías.")
+        return []
+
+def pagina_asesorias():
+    """Página que muestra las asesorías del usuario."""
+    st.write("Tus Asesorías")
+    if 'usuario_id' in st.session_state:
+        asesorias = listar_asesorias(st.session_state['usuario_id'])
+        for asesoria in asesorias:
+            st.subheader(asesoria['titulo'])
+            st.write("Descripción:", asesoria['descripcion'])
+            st.write("Fecha:", asesoria['fecha'])
+            st.write("Hora:", asesoria['hora'])
+            st.write("Profesor:", asesoria['profesor'])
+
+
 def main():
     st.sidebar.title("Navegación")
     choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
@@ -75,6 +97,11 @@ def main():
 
     elif choice == "Registro":
         pagina_registro()
+    elif choice == "Ver Asesorías":
+        if 'usuario_id' in st.session_state:
+            pagina_asesorias()
+        else:
+            st.warning("Por favor, inicia sesión para ver tus asesorías.")
 
 if __name__ == "__main__":
     main()
