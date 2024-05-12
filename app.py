@@ -76,7 +76,6 @@ def pagina_asesorias():
             st.write("Hora:", asesoria['hora'])
             st.write("Profesor:", asesoria['profesor'])
 
-
 def main():
     st.sidebar.title("Navegación")
     choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
