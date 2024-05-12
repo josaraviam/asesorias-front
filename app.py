@@ -1,124 +1,81 @@
 import streamlit as st
 import requests
 
-API_URL = "https://asesorias-api.azurewebsites.net"
+API_URL = "https://asesorias-api.azurewebsites.net"  # Asegúrate de usar la URL correcta de tu API de FastAPI
 
-def login(username, password):
-    """Función para autenticar a un usuario."""
-    response = requests.post(f"{API_URL}/auth/token", data={
-        "username": username,
-        "password": password
-    })
+def create_asesoria(data):
+    response = requests.post(f"{API_URL}/asesorias/", json=data)
+    if response.status_code != 200:
+        st.error(f"Error al crear asesoría: {response.text}")
+    else:
+        st.success("Asesoría creada exitosamente.")
+        return response.json()
+
+def list_asesorias():
+    response = requests.get(f"{API_URL}/asesorias/")
     if response.status_code == 200:
         return response.json()
     else:
-        st.error("Fallo al iniciar sesión.")
-        return None
-
-
-def create_user(nombre, apellido, email, username, password):
-    """Función para registrar un nuevo usuario."""
-    response = requests.post(f"{API_URL}/usuarios", json={
-        "nombre": nombre,
-        "apellido": apellido,
-        "email": email,
-        "username": username,
-        "password": password
-    })
-    if response.status_code == 200:
-        st.success("Usuario creado exitosamente.")
-    elif response.status_code == 204:
-        st.info("No se devolvió contenido.")
-    else:
-        try:
-            # Intentamos obtener el mensaje de error detallado, si está disponible
-            error_detail = response.json().get("detail", "Error desconocido al crear el usuario.")
-        except ValueError:
-            # No se pudo decodificar JSON, manejamos el caso genérico
-            error_detail = "Error sin respuesta detallada del servidor."
-        st.error(f"Error al crear el usuario: {error_detail}")
-
-
-def get_asesorias(token):
-    """Función para obtener las asesorías del usuario autenticado."""
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(f"{API_URL}/asesorias", headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error("Error al obtener asesorías.")
+        st.error("Error al obtener la lista de asesorías.")
         return []
 
-def create_asesoria(token, title, description):
-    """Función para crear una nueva asesoría."""
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.post(f"{API_URL}/asesorias", json={
-        "title": title,
-        "description": description
-    }, headers=headers)
+def update_asesoria(id, data):
+    response = requests.put(f"{API_URL}/asesorias/{id}", json=data)
     if response.status_code == 200:
-        st.success("Asesoría creada exitosamente.")
+        st.success("Asesoría actualizada exitosamente.")
+        return response.json()
     else:
-        st.error("Error al crear la asesoría.")
+        st.error(f"Error al actualizar la asesoría: {response.text}")
 
-def delete_asesoria(token, asesoria_id):
-    """Función para eliminar una asesoría."""
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.delete(f"{API_URL}/asesorias/{asesoria_id}", headers=headers)
-    if response.status_code == 204:
-        st.success("Asesoría eliminada correctamente.")
+def delete_asesoria(id):
+    response = requests.delete(f"{API_URL}/asesorias/{id}")
+    if response.status_code == 200:
+        st.success("Asesoría eliminada exitosamente.")
     else:
-        st.error("Error al eliminar la asesoría.")
+        st.error(f"Error al eliminar la asesoría: {response.text}")
 
-def app():
-    st.sidebar.title("Navegación")
-    menu = ["Inicio", "Registro", "Login", "Mis Asesorías"]
-    choice = st.sidebar.selectbox("Menu", menu)
+def main():
+    st.title("Gestión de Asesorías")
 
-    if choice == "Inicio":
-        st.subheader("Bienvenido a la plataforma de Asesorías Académicas")
+    with st.form("create_asesoria"):
+        st.subheader("Crear nueva asesoría")
+        usuario_id = st.text_input("ID del Usuario", help="Ingrese el ID del usuario asociado a la asesoría.")
+        titulo = st.text_input("Título", help="Ingrese el título de la asesoría.")
+        descripcion = st.text_area("Descripción", help="Ingrese una descripción para la asesoría.")
+        fecha = st.date_input("Fecha", help="Seleccione la fecha de la asesoría.")
+        hora = st.time_input("Hora", help="Seleccione la hora de la asesoría.")
+        profesor = st.text_input("Profesor", help="Ingrese el nombre del profesor para la asesoría.")
+        submit = st.form_submit_button("Crear Asesoría")
+        if submit:
+            asesoria_data = {
+                "usuario_id": usuario_id,
+                "titulo": titulo,
+                "descripcion": descripcion,
+                "fecha": str(fecha),
+                "hora": str(hora),
+                "profesor": profesor
+            }
+            create_asesoria(asesoria_data)
 
-        # En la sección de registro:
-    elif choice == "Registro":
-        with st.form("Formulario de Usuario"):
-            nombre = st.text_input("Nombre")
-            apellido = st.text_input("Apellido")
-            email = st.text_input("Correo Electrónico")
-            username = st.text_input("Nombre de Usuario")
-            password = st.text_input("Contraseña", type="password")
-            submit_button = st.form_submit_button("Registrar Usuario")
-            if submit_button:
-                create_user(nombre, apellido, email, username, password)
+    st.subheader("Lista de Asesorías")
+    asesorias = list_asesorias()
+    for asesoria in asesorias:
+        st.write(f"{asesoria['id']} - {asesoria['titulo']} - {asesoria['descripcion']}")
 
+    with st.form("update_asesoria"):
+        st.subheader("Actualizar Asesoría")
+        asesoria_id = st.text_input("ID de Asesoría a Actualizar", key="update_id")
+        new_titulo = st.text_input("Nuevo Título", key="new_title")
+        update_button = st.form_submit_button("Actualizar Asesoría")
+        if update_button:
+            update_asesoria(asesoria_id, {"titulo": new_titulo})
 
-    elif choice == "Login":
-        with st.form("Formulario de Login"):
-            username = st.text_input("Nombre de Usuario")
-            password = st.text_input("Contraseña")
-            submit_button = st.form_submit_button("Iniciar Sesión")
-            if submit_button:
-                token_response = login(username, password)
-                if token_response:
-                    st.session_state['token'] = token_response['access_token']
-                    st.success("Inicio de sesión exitoso!")
-                    st.experimental_rerun()
-
-    elif choice == "Mis Asesorías":
-        if 'token' in st.session_state:
-            asesorias = get_asesorias(st.session_state['token'])
-            for asesoria in asesorias:
-                st.write(f"Titulo: {asesoria['title']}")
-                st.write(f"Descripción: {asesoria['description']}")
-                if st.button(f"Eliminar {asesoria['title']}"):
-                    delete_asesoria(st.session_state['token'], asesoria['id'])
-            with st.form("Crear Asesoría"):
-                title = st.text_input("Título")
-                description = st.text_area("Descripción")
-                submit_button = st.form_submit_button("Crear Asesoría")
-                if submit_button:
-                    create_asesoria(st.session_state['token'], title, description)
-        else:
-            st.warning("Por favor, inicia sesión para ver tus asesorías.")
+    with st.form("delete_asesoria"):
+        st.subheader("Eliminar Asesoría")
+        delete_id = st.text_input("ID de Asesoría a Eliminar", key="delete_id")
+        delete_button = st.form_submit_button("Eliminar Asesoría")
+        if delete_button:
+            delete_asesoria(delete_id)
 
 if __name__ == "__main__":
-    app()
+    main()
