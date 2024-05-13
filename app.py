@@ -82,9 +82,23 @@ def pagina_asesorias(username):
     asesorias = listar_asesorias_por_usuario(username)
     if asesorias:
         for asesoria in asesorias:
-            st.write(f"Titulo: {asesoria['titulo']}, Fecha: {asesoria['fecha']}, Hora: {asesoria['hora']}")
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.write(f"Titulo: {asesoria['titulo']}, Fecha: {asesoria['fecha']}, Hora: {asesoria['hora']}")
+            with col2:
+                # Añadir un botón de editar con un identificador único
+                edit_button = st.button("Editar", key=f"edit-{asesoria['id']}")
+                if edit_button:
+                    # Almacenar el ID de la asesoría en el estado de la sesión y recargar
+                    st.session_state['editar_asesoria_id'] = asesoria['id']
+                    st.experimental_rerun()
     else:
         st.write("No tienes asesorías registradas.")
+
+    # Comprobar si se ha seleccionado una asesoría para editar
+    if 'editar_asesoria_id' in st.session_state:
+        pagina_editar_asesoria(st.session_state['editar_asesoria_id'])
+
 
 def agregar_asesoria(data):
     """Envía los datos de la nueva asesoría a la API."""
