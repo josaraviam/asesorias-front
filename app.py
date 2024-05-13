@@ -31,6 +31,16 @@ def registrar_usuario(data):
     else:
         st.error(f"Error al registrar usuario: {response.text}")
 
+def obtener_usuario_id_por_username(username):
+    """Obtiene el usuario por nombre de usuario de la API y devuelve el ID del usuario."""
+    response = requests.get(f"{API_URL}/usuarios/by-username/{username}")
+    if response.status_code == 200:
+        usuario = response.json()
+        return usuario['id']
+    else:
+        st.error("No se pudo obtener el ID del usuario")
+        return None
+
 def pagina_registro():
     """Página de registro de usuario."""
     with st.form("form_registro"):
@@ -84,8 +94,9 @@ def agregar_asesoria(data):
     else:
         st.error(f"Error al agregar asesoría: {response.text}")
 
-def pagina_agregar_asesoria(usuario_id):
+def pagina_agregar_asesoria(username):
     """Página para agregar una nueva asesoría."""
+    usuario_id = obtener_usuario_id_por_username(username)  # Obtener el ID del usuario
     with st.form("form_asesoria"):
         st.write("Agregar nueva asesoría")
         titulo = st.text_input("Título")
@@ -101,7 +112,7 @@ def pagina_agregar_asesoria(usuario_id):
                 "fecha": fecha.isoformat(),
                 "hora": hora.strftime("%H:%M"),
                 "profesor": profesor,
-                "usuario_id": usuario_id  # Enviar usuario_id en lugar de username
+                "usuario_id": usuario_id
             }
             agregar_asesoria(data)
 
