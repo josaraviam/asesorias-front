@@ -173,7 +173,8 @@ def main():
     st.sidebar.title("Navegación")
 
     if 'usuario' in st.session_state:
-        choice = st.sidebar.radio("Menu", ["Inicio", "Agregar Asesoría", "Cerrar Sesión"])
+        choice = st.sidebar.radio("Menu", ["Ver Asesorías", "Agregar Asesoría",
+                                           "Editar Asesoría", "Eliminar Asesoría", "Cerrar Sesión"])
     else:
         choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
 
