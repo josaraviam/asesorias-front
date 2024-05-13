@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from passlib.context import CryptContext
+import pandas as pd
 
 # Configurar el contexto de passlib para manejo de contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -83,7 +84,7 @@ def agregar_asesoria(data):
     else:
         st.error(f"Error al agregar asesoría: {response.text}")
 
-def pagina_agregar_asesoria():
+def pagina_agregar_asesoria(username):
     """Página para agregar una nueva asesoría."""
     with st.form("form_asesoria"):
         st.write("Agregar nueva asesoría")
@@ -92,7 +93,6 @@ def pagina_agregar_asesoria():
         fecha = st.date_input("Fecha")
         hora = st.time_input("Hora")
         profesor = st.text_input("Profesor")
-
         submit = st.form_submit_button("Agregar Asesoría")
         if submit:
             data = {
@@ -101,14 +101,75 @@ def pagina_agregar_asesoria():
                 "fecha": fecha.isoformat(),
                 "hora": hora.strftime("%H:%M"),
                 "profesor": profesor,
-                "usuario_id": st.session_state['usuario_id']
+                "username": username
             }
             agregar_asesoria(data)
+
+def actualizar_asesoria(asesoria_id, data):
+    """Envía los datos actualizados de la asesoría a la API."""
+    response = requests.put(f"{API_URL}/asesorias/{asesoria_id}", json=data)
+    if response.status_code == 200:
+        st.success("Asesoría actualizada exitosamente.")
+    else:
+        st.error(f"Error al actualizar asesoría: {response.text}")
+
+def obtener_asesoria_por_id(asesoria_id):
+    """Obtiene una asesoría específica por ID desde la API."""
+    response = requests.get(f"{API_URL}/asesorias/{asesoria_id}")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Asesoría no encontrada.")
+        return None
+
+
+def pagina_editar_asesoria(asesoria_id):
+    """Página para editar una asesoría existente."""
+    asesoria = obtener_asesoria_por_id(asesoria_id)
+    if asesoria:
+        with st.form("form_editar_asesoria"):
+            st.write("Editar asesoría")
+            titulo = st.text_input("Título", value=asesoria['titulo'])
+            descripcion = st.text_area("Descripción", value=asesoria['descripcion'])
+            fecha = st.date_input("Fecha", value=pd.to_datetime(asesoria['fecha']))
+            hora = st.time_input("Hora", value=pd.to_datetime(asesoria['hora']).time())
+            profesor = st.text_input("Profesor", value=asesoria['profesor'])
+            submit = st.form_submit_button("Actualizar Asesoría")
+            if submit:
+                updated_data = {
+                    "titulo": titulo,
+                    "descripcion": descripcion,
+                    "fecha": fecha.isoformat(),
+                    "hora": hora.strftime("%H:%M"),
+                    "profesor": profesor,
+                    "usuario_id": asesoria['usuario_id']  # Asegúrate de incluir el usuario_id si es necesario
+                }
+                actualizar_asesoria(asesoria_id, updated_data)
+    else:
+        st.error("No se pudo cargar la asesoría para editar.")
+
+def eliminar_asesoria(asesoria_id):
+    """Elimina una asesoría específica mediante su ID."""
+    response = requests.delete(f"{API_URL}/asesorias/{asesoria_id}")
+    if response.status_code == 200:
+        st.success("Asesoría eliminada exitosamente.")
+    else:
+        st.error("Error al eliminar la asesoría.")
 
 
 def main():
     st.sidebar.title("Navegación")
-    choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
+    if 'usuario' in st.session_state:
+        choice = st.sidebar.radio("Menu", ["Inicio", "Agregar Asesoría", "Cerrar Sesión"])
+        if choice == "Inicio":
+            pagina_asesorias(st.session_state['usuario'])
+        elif choice == "Agregar Asesoría":
+            pagina_agregar_asesoria(st.session_state['usuario'])
+        elif choice == "Cerrar Sesión":
+            del st.session_state['usuario']  # Limpiar el estado de sesión
+            st.info("Has cerrado la sesión correctamente.")
+    else:
+        choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
 
     if choice == "Iniciar sesión":
         username = st.sidebar.text_input("Nombre de usuario")
