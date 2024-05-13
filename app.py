@@ -88,7 +88,7 @@ def pagina_asesorias(username):
 
 def agregar_asesoria(data):
     """Envía los datos de la nueva asesoría a la API."""
-    response = requests.post(f"{API_URL}/asesorias", json=data)
+    response = requests.post(f"{API_URL}/asesorias/", json=data)
     if response.status_code == 200:
         st.success("Asesoría agregada exitosamente.")
     else:
