@@ -195,10 +195,18 @@ def main():
         pagina_registro()
 
     elif 'usuario' in st.session_state:
-        if choice == "Inicio":
+        if choice == "Ver Asesorías":
             pagina_asesorias(st.session_state['usuario'])
         elif choice == "Agregar Asesoría":
             pagina_agregar_asesoria(st.session_state['usuario'])
+        elif choice == "Editar Asesoría":
+            asesoria_id = st.text_input("Introduce el ID de la asesoría a editar")
+            if st.button("Editar Asesoría"):
+                pagina_editar_asesoria(asesoria_id)
+        elif choice == "Eliminar Asesoría":
+            asesoria_id = st.text_input("Introduce el ID de la asesoría a eliminar")
+            if st.button("Eliminar Asesoría"):
+                eliminar_asesoria(asesoria_id)
         elif choice == "Cerrar Sesión":
             del st.session_state['usuario']  # Limpiar el estado de sesión
             st.experimental_rerun()  # Forzar la recarga de la página para eliminar el estado de sesión
