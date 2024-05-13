@@ -56,20 +56,20 @@ def pagina_registro():
             else:
                 st.error("Las contraseñas no coinciden.")
 
-def listar_asesorias(username):
+def listar_asesorias_por_usuario(username):
     """Obtiene asesorías del usuario por nombre de usuario de la API."""
-    response = requests.get(f"{API_URL}/asesorias/username/{username}")
+    response = requests.get(f"{API_URL}/asesorias/by-username/{username}")
     if response.status_code == 200:
         return response.json()
     else:
-        st.error("Error al obtener asesorías.")
+        st.error(f"Error al obtener asesorías: {response.text}")
         return []
 
 
 def pagina_asesorias(username):
     """Página que muestra las asesorías del usuario."""
     st.write("Tus Asesorías")
-    asesorias = listar_asesorias(username)
+    asesorias = listar_asesorias_por_usuario(username)
     if asesorias:
         for asesoria in asesorias:
             st.write(f"Titulo: {asesoria['titulo']}, Fecha: {asesoria['fecha']}, Hora: {asesoria['hora']}")
