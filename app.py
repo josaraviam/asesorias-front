@@ -97,7 +97,7 @@ def agregar_asesoria(data):
 def pagina_agregar_asesoria(username):
     """Página para agregar una nueva asesoría."""
     usuario_id = obtener_usuario_id_por_username(username)  # Obtener el ID del usuario
-    print("Usuario ID:", usuario_id)  # Debug: imprimir el usuario_id
+    st.write(f"Usuario ID: {usuario_id}")
     with st.form("form_asesoria"):
         st.write("Agregar nueva asesoría")
         titulo = st.text_input("Título")
