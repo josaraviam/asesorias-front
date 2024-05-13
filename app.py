@@ -82,16 +82,21 @@ def pagina_asesorias(username):
     asesorias = listar_asesorias_por_usuario(username)
     if asesorias:
         for asesoria in asesorias:
-            col1, col2 = st.columns([4, 1])
+            col1, col2, col3 = st.columns([3, 1, 1])
             with col1:
                 st.write(f"Titulo: {asesoria['titulo']}, Fecha: {asesoria['fecha']}, Hora: {asesoria['hora']}")
             with col2:
-                # Añadir un botón de editar con un identificador único
                 edit_button = st.button("Editar", key=f"edit-{asesoria['id']}")
                 if edit_button:
                     # Almacenar el ID de la asesoría en el estado de la sesión y recargar
                     st.session_state['editar_asesoria_id'] = asesoria['id']
                     st.experimental_rerun()
+            with col3:
+                delete_button = st.button("Eliminar", key=f"delete-{asesoria['id']}")
+                if delete_button:
+                    # Almacenar el ID de la asesoría para eliminar y recargar
+                    st.session_state['eliminar_asesoria_id'] = asesoria['id']
+                    eliminar_asesoria(asesoria['id'])
     else:
         st.write("No tienes asesorías registradas.")
 
@@ -175,20 +180,19 @@ def pagina_editar_asesoria(asesoria_id):
         st.error("No se pudo cargar la asesoría para editar.")
 
 def eliminar_asesoria(asesoria_id):
-    """Elimina una asesoría específica mediante su ID."""
     response = requests.delete(f"{API_URL}/asesorias/{asesoria_id}")
     if response.status_code == 200:
         st.success("Asesoría eliminada exitosamente.")
+        st.experimental_rerun()  # Actualizar la lista de asesorías
     else:
-        st.error("Error al eliminar la asesoría.")
+        st.error(f"Error al eliminar la asesoría: {response.text}")
 
 
 def main():
     st.sidebar.title("Navegación")
 
     if 'usuario' in st.session_state:
-        choice = st.sidebar.radio("Menu", ["Ver Asesorías", "Agregar Asesoría",
-                                           "Editar Asesoría", "Eliminar Asesoría", "Cerrar Sesión"])
+        choice = st.sidebar.radio("Menu", ["Gestionar Asesorías", "Agregar Asesoría", "Cerrar Sesión"])
     else:
         choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
 
@@ -210,18 +214,10 @@ def main():
         pagina_registro()
 
     elif 'usuario' in st.session_state:
-        if choice == "Ver Asesorías":
+        if choice == "Gestionar Asesorías":
             pagina_asesorias(st.session_state['usuario'])
         elif choice == "Agregar Asesoría":
             pagina_agregar_asesoria(st.session_state['usuario'])
-        elif choice == "Editar Asesoría":
-            asesoria_id = st.text_input("Introduce el ID de la asesoría a editar")
-            if st.button("Editar Asesoría"):
-                pagina_editar_asesoria(asesoria_id)
-        elif choice == "Eliminar Asesoría":
-            asesoria_id = st.text_input("Introduce el ID de la asesoría a eliminar")
-            if st.button("Eliminar Asesoría"):
-                eliminar_asesoria(asesoria_id)
         elif choice == "Cerrar Sesión":
             del st.session_state['usuario']  # Limpiar el estado de sesión
             st.experimental_rerun()  # Forzar la recarga de la página para eliminar el estado de sesión
