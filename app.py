@@ -84,7 +84,7 @@ def agregar_asesoria(data):
     else:
         st.error(f"Error al agregar asesoría: {response.text}")
 
-def pagina_agregar_asesoria(username):
+def pagina_agregar_asesoria(usuario_id):
     """Página para agregar una nueva asesoría."""
     with st.form("form_asesoria"):
         st.write("Agregar nueva asesoría")
@@ -101,7 +101,7 @@ def pagina_agregar_asesoria(username):
                 "fecha": fecha.isoformat(),
                 "hora": hora.strftime("%H:%M"),
                 "profesor": profesor,
-                "username": username
+                "usuario_id": usuario_id  # Enviar usuario_id en lugar de username
             }
             agregar_asesoria(data)
 
