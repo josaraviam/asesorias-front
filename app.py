@@ -33,7 +33,7 @@ def registrar_usuario(data):
 
 def obtener_usuario_id_por_username(username):
     """Obtiene el usuario por nombre de usuario de la API y devuelve el ID del usuario."""
-    response = requests.get(f"{API_URL}/usuarios/by-username/{username}")
+    response = requests.get(f"{API_URL}/usuarios/username/{username}")
     if response.status_code == 200:
         usuario = response.json()
         return usuario['id']
