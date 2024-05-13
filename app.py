@@ -159,35 +159,37 @@ def eliminar_asesoria(asesoria_id):
 
 def main():
     st.sidebar.title("Navegación")
+
     if 'usuario' in st.session_state:
         choice = st.sidebar.radio("Menu", ["Inicio", "Agregar Asesoría", "Cerrar Sesión"])
+    else:
+        choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
+
+    if choice == "Iniciar sesión":
+        if 'usuario' not in st.session_state:
+            username = st.sidebar.text_input("Nombre de usuario", key="username")
+            password = st.sidebar.text_input("Contraseña", type="password", key="password")
+            if st.sidebar.button("Login", key="login"):
+                if verificar_usuario(username, password):
+                    st.session_state['usuario'] = username  # Mantener estado de sesión
+                    st.experimental_rerun()  # Forzar la recarga de la página para actualizar la barra lateral
+                else:
+                    st.error("Nombre de usuario o contraseña incorrectos")
+        else:
+            st.info("Ya has iniciado sesión.")
+            pagina_asesorias(st.session_state['usuario'])
+
+    elif choice == "Registro":
+        pagina_registro()
+
+    elif 'usuario' in st.session_state:
         if choice == "Inicio":
             pagina_asesorias(st.session_state['usuario'])
         elif choice == "Agregar Asesoría":
             pagina_agregar_asesoria(st.session_state['usuario'])
         elif choice == "Cerrar Sesión":
             del st.session_state['usuario']  # Limpiar el estado de sesión
-            st.info("Has cerrado la sesión correctamente.")
-    else:
-        choice = st.sidebar.radio("Menu", ["Iniciar sesión", "Registro"])
-
-    if choice == "Iniciar sesión":
-        username = st.sidebar.text_input("Nombre de usuario")
-        password = st.sidebar.text_input("Contraseña", type="password")
-        if st.sidebar.button("Login"):
-            if verificar_usuario(username, password):
-                st.session_state['usuario'] = username  # Mantener estado de sesión
-                st.success("Inicio de sesión exitoso")
-                pagina_asesorias(username)  # Mostrar asesorías directamente después de iniciar sesión
-            else:
-                st.error("Nombre de usuario o contraseña incorrectos")
-        if 'usuario' in st.session_state:
-            st.write(f"Bienvenido, {st.session_state['usuario']}!")
-        else:
-            st.info("Por favor, inicia sesión para continuar.")
-
-    elif choice == "Registro":
-        pagina_registro()
+            st.experimental_rerun()  # Forzar la recarga de la página para eliminar el estado de sesión
 
 if __name__ == "__main__":
     main()
